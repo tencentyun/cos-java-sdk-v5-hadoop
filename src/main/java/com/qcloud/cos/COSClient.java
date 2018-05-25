@@ -181,8 +181,8 @@ public class COSClient implements COS {
      * </p>
      *
      * @param parameterValue The parameter value being checked.
-     * @param errorMessage The error message to include in the IllegalArgumentException if the
-     *        specified parameter is null.
+     * @param errorMessage   The error message to include in the IllegalArgumentException if the
+     *                       specified parameter is null.
      */
     private void rejectNull(Object parameterValue, String errorMessage) {
         if (parameterValue == null)
@@ -190,7 +190,7 @@ public class COSClient implements COS {
     }
 
     protected <X extends CosServiceRequest> CosHttpRequest<X> createRequest(String bucketName,
-            String key, X originalRequest, HttpMethodName httpMethod) {
+                                                                            String key, X originalRequest, HttpMethodName httpMethod) {
         CosHttpRequest<X> httpRequest = new CosHttpRequest<X>(originalRequest);
         httpRequest.setHttpMethod(httpMethod);
         httpRequest.addHeader(Headers.USER_AGENT, clientConfig.getUserAgent());
@@ -204,7 +204,7 @@ public class COSClient implements COS {
     }
 
     private void addAclHeaders(CosHttpRequest<? extends CosServiceRequest> request,
-            AccessControlList acl) {
+                               AccessControlList acl) {
         List<Grant> grants = acl.getGrantsAsList();
         Map<Permission, Collection<Grantee>> grantsByPermission =
                 new HashMap<Permission, Collection<Grantee>>();
@@ -238,11 +238,11 @@ public class COSClient implements COS {
      * {@link ObjectMetadata} object.
      * </p>
      *
-     * @param request The request to populate with headers.
+     * @param request  The request to populate with headers.
      * @param metadata The metadata containing the header information to include in the request.
      */
     protected static void populateRequestMetadata(CosHttpRequest<?> request,
-            ObjectMetadata metadata) {
+                                                  ObjectMetadata metadata) {
         Map<String, Object> rawMetadata = metadata.getRawMetadata();
         if (rawMetadata != null) {
             for (Entry<String, Object> entry : rawMetadata.entrySet()) {
@@ -282,9 +282,20 @@ public class COSClient implements COS {
         String sourceBucket = formatBucket(copyObjectRequest.getSourceBucketName(),
                 (copyObjectRequest.getSourceAppid() != null) ? copyObjectRequest.getSourceAppid()
                         : this.cred.getCOSAppId());
-        String copySourceHeader = String.format("%s.%s.myqcloud.com%s", sourceBucket,
-                formatRegion(sourceRegion.getRegionName()),
-                UrlEncoderUtils.encodeEscapeDelimiter(sourceKey));
+        String copySourceHeader;
+        if (this.clientConfig.getEndPointSuffix() != null) {
+            String endPointSuffix = clientConfig.getEndPointSuffix();
+            if (endPointSuffix.startsWith(".")) {
+                copySourceHeader = String.format("%s%s%s", sourceBucket, endPointSuffix, UrlEncoderUtils.encodeEscapeDelimiter(sourceKey));
+            } else {
+                copySourceHeader = String.format("%s.%s%s", sourceBucket, endPointSuffix, UrlEncoderUtils.encodeEscapeDelimiter(sourceKey));
+            }
+        } else {
+            copySourceHeader = String.format("%s.%s.myqcloud.com%s", sourceBucket,
+                    formatRegion(sourceRegion.getRegionName()),
+                    UrlEncoderUtils.encodeEscapeDelimiter(sourceKey));
+        }
+
         if (copyObjectRequest.getSourceVersionId() != null) {
             copySourceHeader += "?versionId=" + copyObjectRequest.getSourceVersionId();
         }
@@ -419,7 +430,7 @@ public class COSClient implements COS {
     }
 
     private <X extends CosServiceRequest> void buildUrlAndHost(CosHttpRequest<X> request,
-            String bucket, String key, boolean isServiceRequest) throws CosClientException {
+                                                               String bucket, String key, boolean isServiceRequest) throws CosClientException {
         key = formatKey(key);
         request.setResourcePath(key);
         String host = "";
@@ -447,15 +458,15 @@ public class COSClient implements COS {
     }
 
     private <X, Y extends CosServiceRequest> X invoke(CosHttpRequest<Y> request,
-            Unmarshaller<X, InputStream> unmarshaller)
-                    throws CosClientException, CosServiceException {
+                                                      Unmarshaller<X, InputStream> unmarshaller)
+            throws CosClientException, CosServiceException {
         return invoke(request, new COSXmlResponseHandler<X>(unmarshaller));
 
     }
 
     private <X, Y extends CosServiceRequest> X invoke(CosHttpRequest<Y> request,
-            HttpResponseHandler<CosServiceResponse<X>> responseHandler)
-                    throws CosClientException, CosServiceException {
+                                                      HttpResponseHandler<CosServiceResponse<X>> responseHandler)
+            throws CosClientException, CosServiceException {
 
         COSSigner cosSigner = new COSSigner();
         cosSigner.sign(request, cred);
@@ -475,12 +486,12 @@ public class COSClient implements COS {
     /**
      * Adds the specified parameter to the specified request, if the parameter value is not null.
      *
-     * @param request The request to add the parameter to.
-     * @param paramName The parameter name.
+     * @param request    The request to add the parameter to.
+     * @param paramName  The parameter name.
      * @param paramValue The parameter value.
      */
     private static void addParameterIfNotNull(CosHttpRequest<?> request, String paramName,
-            String paramValue) {
+                                              String paramValue) {
         if (paramValue != null) {
             request.addParameter(paramName, paramValue);
         }
@@ -490,8 +501,8 @@ public class COSClient implements COS {
      * Adds the specified header to the specified request, if the header value is not null.
      *
      * @param request The request to add the header to.
-     * @param header The header name.
-     * @param value The header value.
+     * @param header  The header name.
+     * @param value   The header value.
      */
     private static void addHeaderIfNotNull(CosHttpRequest<?> request, String header, String value) {
         if (value != null) {
@@ -506,8 +517,8 @@ public class COSClient implements COS {
      * </p>
      *
      * @param request The request to add the header to.
-     * @param header The header name.
-     * @param value The header value.
+     * @param header  The header name.
+     * @param value   The header value.
      */
     private static void addDateHeader(CosHttpRequest<?> request, String header, Date value) {
         if (value != null) {
@@ -523,11 +534,11 @@ public class COSClient implements COS {
      * </p>
      *
      * @param request The request to add the header to.
-     * @param header The header name.
-     * @param values The list of strings to join together for the header value.
+     * @param header  The header name.
+     * @param values  The list of strings to join together for the header value.
      */
     private static void addStringListHeader(CosHttpRequest<?> request, String header,
-            List<String> values) {
+                                            List<String> values) {
         if (values != null && !values.isEmpty()) {
             request.addHeader(header, StringUtils.join(values));
         }
@@ -538,7 +549,7 @@ public class COSClient implements COS {
     }
 
     private boolean shouldRetryCompleteMultipartUpload(CosServiceRequest originalRequest,
-            CosClientException exception, int retriesAttempted) {
+                                                       CosClientException exception, int retriesAttempted) {
         return false;
     }
 
@@ -547,11 +558,11 @@ public class COSClient implements COS {
      * Adds response headers parameters to the request given, if non-null.
      * </p>
      *
-     * @param request The request to add the response header parameters to.
+     * @param request         The request to add the response header parameters to.
      * @param responseHeaders The full set of response headers to add, or null for none.
      */
     private static void addResponseHeaderParameters(CosHttpRequest<?> request,
-            ResponseHeaderOverrides responseHeaders) {
+                                                    ResponseHeaderOverrides responseHeaders) {
         if (responseHeaders != null) {
             if (responseHeaders.getCacheControl() != null) {
                 request.addParameter(ResponseHeaderOverrides.RESPONSE_HEADER_CACHE_CONTROL,
@@ -666,11 +677,11 @@ public class COSClient implements COS {
                     // plain-text data stream which in turn may have been wrapped
                     // with it's own length check input stream.)
                     LengthCheckInputStream lcis = new LengthCheckInputStream(input, expectedLength, // expected
-                                                                                                    // data
-                                                                                                    // length
-                                                                                                    // to
-                                                                                                    // be
-                                                                                                    // uploaded
+                            // data
+                            // length
+                            // to
+                            // be
+                            // uploaded
                             EXCLUDE_SKIPPED_BYTES);
                     input = lcis;
                 }
@@ -743,7 +754,7 @@ public class COSClient implements COS {
 
     @Override
     public PutObjectResult putObject(String bucketName, String key, InputStream input,
-            ObjectMetadata metadata) throws CosClientException, CosServiceException {
+                                     ObjectMetadata metadata) throws CosClientException, CosServiceException {
         return putObject(new PutObjectRequest(bucketName, key, input, metadata));
     }
 
@@ -821,7 +832,7 @@ public class COSClient implements COS {
                 is = new LengthCheckInputStream(is,
                         cosObject.getObjectMetadata().getContentLength(), // expected length
                         INCLUDE_SKIPPED_BYTES); // bytes received from cos are all included even if
-                                                // skipped
+                // skipped
             }
             cosObject.setObjectContent(new COSObjectInputStream(is, httpRequest));
             return cosObject;
@@ -1128,7 +1139,7 @@ public class COSClient implements COS {
     @Override
     public InitiateMultipartUploadResult initiateMultipartUpload(
             InitiateMultipartUploadRequest initiateMultipartUploadRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(initiateMultipartUploadRequest,
                 "The request parameter must be specified when initiating a multipart upload");
         rejectNull(initiateMultipartUploadRequest.getBucketName(),
@@ -1239,9 +1250,9 @@ public class COSClient implements COS {
     }
 
     private UploadPartResult doUploadPart(final String bucketName, final String key,
-            final String uploadId, final int partNumber, final long partSize,
-            CosHttpRequest<UploadPartRequest> request, InputStream inputStream,
-            MD5DigestCalculatingInputStream md5DigestStream) {
+                                          final String uploadId, final int partNumber, final long partSize,
+                                          CosHttpRequest<UploadPartRequest> request, InputStream inputStream,
+                                          MD5DigestCalculatingInputStream md5DigestStream) {
         try {
             request.setContent(inputStream);
             ObjectMetadata metadata = invoke(request, new CosMetadataResponseHandler());
@@ -1328,11 +1339,10 @@ public class COSClient implements COS {
     }
 
 
-
     @Override
     public CompleteMultipartUploadResult completeMultipartUpload(
             CompleteMultipartUploadRequest completeMultipartUploadRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(completeMultipartUploadRequest,
                 "The request parameter must be specified when completing a multipart upload");
 
@@ -1385,7 +1395,7 @@ public class COSClient implements COS {
     @Override
     public MultipartUploadListing listMultipartUploads(
             ListMultipartUploadsRequest listMultipartUploadsRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(listMultipartUploadsRequest,
                 "The request parameter must be specified when listing multipart uploads");
 
@@ -1461,7 +1471,7 @@ public class COSClient implements COS {
     @Override
     public ObjectListing listNextBatchOfObjects(
             ListNextBatchOfObjectsRequest listNextBatchOfObjectsRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(listNextBatchOfObjectsRequest,
                 "The request object parameter must be specified when listing the next batch of objects in a bucket");
         ObjectListing previousObjectListing =
@@ -1490,8 +1500,8 @@ public class COSClient implements COS {
 
     @Override
     public VersionListing listVersions(String bucketName, String prefix, String keyMarker,
-            String versionIdMarker, String delimiter, Integer maxResults)
-                    throws CosClientException, CosServiceException {
+                                       String versionIdMarker, String delimiter, Integer maxResults)
+            throws CosClientException, CosServiceException {
         ListVersionsRequest request = new ListVersionsRequest().withBucketName(bucketName)
                 .withPrefix(prefix).withDelimiter(delimiter).withKeyMarker(keyMarker)
                 .withVersionIdMarker(versionIdMarker).withMaxResults(maxResults);
@@ -1533,7 +1543,7 @@ public class COSClient implements COS {
     @Override
     public VersionListing listNextBatchOfVersions(
             ListNextBatchOfVersionsRequest listNextBatchOfVersionsRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(listNextBatchOfVersionsRequest,
                 "The request object parameter must be specified when listing the next batch of versions in a bucket");
         VersionListing previousVersionListing =
@@ -1558,8 +1568,8 @@ public class COSClient implements COS {
 
     @Override
     public CopyObjectResult copyObject(String sourceBucketName, String sourceKey,
-            String destinationBucketName, String destinationKey)
-                    throws CosClientException, CosServiceException {
+                                       String destinationBucketName, String destinationKey)
+            throws CosClientException, CosServiceException {
         return copyObject(new CopyObjectRequest(sourceBucketName, sourceKey, destinationBucketName,
                 destinationKey));
     }
@@ -1747,8 +1757,8 @@ public class COSClient implements COS {
 
     @Override
     public void setBucketLifecycleConfiguration(String bucketName,
-            BucketLifecycleConfiguration bucketLifecycleConfiguration)
-                    throws CosClientException, CosServiceException {
+                                                BucketLifecycleConfiguration bucketLifecycleConfiguration)
+            throws CosClientException, CosServiceException {
         setBucketLifecycleConfiguration(new SetBucketLifecycleConfigurationRequest(bucketName,
                 bucketLifecycleConfiguration));
     }
@@ -1756,7 +1766,7 @@ public class COSClient implements COS {
     @Override
     public void setBucketLifecycleConfiguration(
             SetBucketLifecycleConfigurationRequest setBucketLifecycleConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(setBucketLifecycleConfigurationRequest,
                 "The set bucket lifecycle configuration request object must be specified.");
 
@@ -1831,7 +1841,7 @@ public class COSClient implements COS {
     @Override
     public void deleteBucketLifecycleConfiguration(
             DeleteBucketLifecycleConfigurationRequest deleteBucketLifecycleConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(deleteBucketLifecycleConfigurationRequest,
                 "The delete bucket lifecycle configuration request object must be specified.");
 
@@ -1849,7 +1859,7 @@ public class COSClient implements COS {
     @Override
     public void setBucketVersioningConfiguration(
             SetBucketVersioningConfigurationRequest setBucketVersioningConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(setBucketVersioningConfigurationRequest,
                 "The SetBucketVersioningConfigurationRequest object must be specified when setting versioning configuration");
 
@@ -1884,7 +1894,7 @@ public class COSClient implements COS {
     @Override
     public BucketVersioningConfiguration getBucketVersioningConfiguration(
             GetBucketVersioningConfigurationRequest getBucketVersioningConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(getBucketVersioningConfigurationRequest,
                 "The request object parameter getBucketVersioningConfigurationRequest must be specified.");
         String bucketName = getBucketVersioningConfigurationRequest.getBucketName();
@@ -2019,17 +2029,16 @@ public class COSClient implements COS {
      * parameter is specified, otherwise the object with the specified key in the bucket).
      * </p>
      *
-     * @param bucketName The name of the bucket whose ACL should be returned if the key parameter is
-     *        not specified, otherwise the bucket containing the specified key.
-     * @param key The object key whose ACL should be retrieve. If not specified, the bucket's ACL is
-     *        returned.
-     * @param versionId The version ID of the object version whose ACL is being retrieved.
+     * @param bucketName      The name of the bucket whose ACL should be returned if the key parameter is
+     *                        not specified, otherwise the bucket containing the specified key.
+     * @param key             The object key whose ACL should be retrieve. If not specified, the bucket's ACL is
+     *                        returned.
+     * @param versionId       The version ID of the object version whose ACL is being retrieved.
      * @param originalRequest The original, user facing request object.
-     *
      * @return The ACL for the specified resource.
      */
     private AccessControlList getAcl(String bucketName, String key, String versionId,
-            CosServiceRequest originalRequest) {
+                                     CosServiceRequest originalRequest) {
         if (originalRequest == null)
             originalRequest = new GenericBucketRequest(bucketName);
 
@@ -2054,16 +2063,16 @@ public class COSClient implements COS {
      * be applied to the bucket, otherwise if bucketName and key are specified, the ACL will be
      * applied to the object.
      *
-     * @param bucketName The name of the bucket containing the specified key, or if no key is
-     *        listed, the bucket whose ACL will be set.
-     * @param key The optional object key within the specified bucket whose ACL will be set. If not
-     *        specified, the bucket ACL will be set.
-     * @param versionId The version ID of the object version whose ACL is being set.
-     * @param acl The ACL to apply to the resource.
+     * @param bucketName      The name of the bucket containing the specified key, or if no key is
+     *                        listed, the bucket whose ACL will be set.
+     * @param key             The optional object key within the specified bucket whose ACL will be set. If not
+     *                        specified, the bucket ACL will be set.
+     * @param versionId       The version ID of the object version whose ACL is being set.
+     * @param acl             The ACL to apply to the resource.
      * @param originalRequest The original, user facing request object.
      */
     private void setAcl(String bucketName, String key, String versionId, AccessControlList acl,
-            CosServiceRequest originalRequest) {
+                        CosServiceRequest originalRequest) {
         if (originalRequest == null)
             originalRequest = new GenericBucketRequest(bucketName);
 
@@ -2082,8 +2091,8 @@ public class COSClient implements COS {
     }
 
     private void setAcl(String bucketName, String key, String versionId,
-            CannedAccessControlList cannedAcl, CosServiceRequest originalRequest)
-                    throws CosClientException, CosServiceException {
+                        CannedAccessControlList cannedAcl, CosServiceRequest originalRequest)
+            throws CosClientException, CosServiceException {
         if (originalRequest == null)
             originalRequest = new GenericBucketRequest(bucketName);
 
@@ -2107,7 +2116,7 @@ public class COSClient implements COS {
     @Override
     public BucketCrossOriginConfiguration getBucketCrossOriginConfiguration(
             GetBucketCrossOriginConfigurationRequest getBucketCrossOriginConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(getBucketCrossOriginConfigurationRequest,
                 "The request object parameter getBucketCrossOriginConfigurationRequest must be specified.");
         String bucketName = getBucketCrossOriginConfigurationRequest.getBucketName();
@@ -2132,16 +2141,17 @@ public class COSClient implements COS {
 
     @Override
     public void setBucketCrossOriginConfiguration(String bucketName,
-            BucketCrossOriginConfiguration bucketCrossOriginConfiguration)
-                    throws CosClientException, CosServiceException {
+                                                  BucketCrossOriginConfiguration bucketCrossOriginConfiguration)
+            throws CosClientException, CosServiceException {
         setBucketCrossOriginConfiguration(new SetBucketCrossOriginConfigurationRequest(bucketName,
-                bucketCrossOriginConfiguration));;
+                bucketCrossOriginConfiguration));
+        ;
     }
 
     @Override
     public void setBucketCrossOriginConfiguration(
             SetBucketCrossOriginConfigurationRequest setBucketCrossOriginConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(setBucketCrossOriginConfigurationRequest,
                 "The set bucket cross origin configuration request object must be specified.");
 
@@ -2184,7 +2194,7 @@ public class COSClient implements COS {
     @Override
     public void deleteBucketCrossOriginConfiguration(
             DeleteBucketCrossOriginConfigurationRequest deleteBucketCrossOriginConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(deleteBucketCrossOriginConfigurationRequest,
                 "The delete bucket cross origin configuration request object must be specified.");
 
@@ -2201,8 +2211,8 @@ public class COSClient implements COS {
 
     @Override
     public void setBucketReplicationConfiguration(String bucketName,
-            BucketReplicationConfiguration configuration)
-                    throws CosClientException, CosServiceException {
+                                                  BucketReplicationConfiguration configuration)
+            throws CosClientException, CosServiceException {
         setBucketReplicationConfiguration(
                 new SetBucketReplicationConfigurationRequest(bucketName, configuration));
     }
@@ -2210,7 +2220,7 @@ public class COSClient implements COS {
     @Override
     public void setBucketReplicationConfiguration(
             SetBucketReplicationConfigurationRequest setBucketReplicationConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(setBucketReplicationConfigurationRequest,
                 "The set bucket replication configuration request object must be specified.");
 
@@ -2257,7 +2267,7 @@ public class COSClient implements COS {
     @Override
     public BucketReplicationConfiguration getBucketReplicationConfiguration(
             GetBucketReplicationConfigurationRequest getBucketReplicationConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         rejectNull(getBucketReplicationConfigurationRequest,
                 "The bucket request parameter must be specified when retrieving replication configuration");
         String bucketName = getBucketReplicationConfigurationRequest.getBucketName();
@@ -2281,7 +2291,7 @@ public class COSClient implements COS {
     @Override
     public void deleteBucketReplicationConfiguration(
             DeleteBucketReplicationConfigurationRequest deleteBucketReplicationConfigurationRequest)
-                    throws CosClientException, CosServiceException {
+            throws CosClientException, CosServiceException {
         final String bucketName = deleteBucketReplicationConfigurationRequest.getBucketName();
         rejectNull(bucketName,
                 "The bucket name parameter must be specified when deleting replication configuration");
@@ -2302,7 +2312,7 @@ public class COSClient implements COS {
 
     @Override
     public URL generatePresignedUrl(String bucketName, String key, Date expiration,
-            HttpMethodName method) throws CosClientException {
+                                    HttpMethodName method) throws CosClientException {
         GeneratePresignedUrlRequest request =
                 new GeneratePresignedUrlRequest(bucketName, key, method);
         request.setExpiration(expiration);
@@ -2355,10 +2365,19 @@ public class COSClient implements COS {
                         request.getHeaders(), request.getParameters(), cred, req.getExpiration());
         StringBuilder strBuilder = new StringBuilder();
 
-        strBuilder.append("http://").append(formatBucket(bucketName, cred.getCOSAppId()))
-                .append(".").append(formatRegion(clientConfig.getRegion().getRegionName()))
-                .append(".myqcloud.com")
-                .append(UrlEncoderUtils.encodeEscapeDelimiter(formatKey(key)));
+        if (this.clientConfig.getEndPointSuffix() != null) {
+            String endPointSuffix = clientConfig.getEndPointSuffix();
+            if (endPointSuffix.startsWith(".")) {
+                strBuilder.append("http://").append(bucketName).append(endPointSuffix);
+            } else {
+                strBuilder.append("http://").append(bucketName).append(".").append(endPointSuffix);
+            }
+        } else {
+            strBuilder.append("http://").append(formatBucket(bucketName, cred.getCOSAppId()))
+                    .append(".").append(formatRegion(clientConfig.getRegion().getRegionName()))
+                    .append(".myqcloud.com")
+                    .append(UrlEncoderUtils.encodeEscapeDelimiter(formatKey(key)));
+        }
 
         boolean hasAppendFirstParameter = false;
         if (authStr != null) {
