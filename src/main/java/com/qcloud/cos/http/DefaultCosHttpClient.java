@@ -297,7 +297,7 @@ public class DefaultCosHttpClient implements CosHttpClient {
      * Wrap with a {@link ProgressInputStream} to report request progress to listener.
      *
      * @param listener Listener to report to
-     * @param content Input stream to monitor progress for
+     * @param content  Input stream to monitor progress for
      * @return Wrapped input stream with progress monitoring capabilities.
      */
     private InputStream monitorStreamProgress(ProgressListener listener, InputStream content) {
@@ -306,8 +306,8 @@ public class DefaultCosHttpClient implements CosHttpClient {
 
     @Override
     public <X, Y extends CosServiceRequest> X exeute(CosHttpRequest<Y> request,
-            HttpResponseHandler<CosServiceResponse<X>> responseHandler)
-                    throws CosClientException, CosServiceException {
+                                                     HttpResponseHandler<CosServiceResponse<X>> responseHandler)
+            throws CosClientException, CosServiceException {
 
         HttpResponse httpResponse = null;
         HttpRequestBase httpRequest = null;
@@ -347,17 +347,17 @@ public class DefaultCosHttpClient implements CosHttpClient {
                 ++retryIndex;
                 if (retryIndex >= kMaxRetryCnt) {
                     String errMsg = String.format(
-                            "httpClient execute occur a IOexcepiton. httpRequest: %s, excep: %s",
+                            "httpClient execute occur a IOException. httpRequest: %s, Exception: %s",
                             request.toString(), e);
                     log.error(errMsg);
                     throw new CosClientException(errMsg);
                 } else {
                     String warnMsg = String.format(
-                            "httpClient execute occur a IOexcepiton, ready to retry[%d/%d]. httpRequest: %s, excep: %s",
+                            "httpClient execute occur a IOException, ready to retry[%d/%d]. httpRequest: %s, Exception: %s",
                             retryIndex, kMaxRetryCnt, request.toString(), e);
                     log.warn(warnMsg);
-                    // 加入sleep 避免雪崩
-                    int threadSleepMs = ThreadLocalRandom.current().nextInt(10, 100);
+                    // 加入sleep 避免雪崩，由于是网络请求，因此重试间隔在3~5秒之间是比较合理的
+                    int threadSleepMs = ThreadLocalRandom.current().nextInt(3000, 5000);
                     try {
                         Thread.sleep(threadSleepMs);
                     } catch (InterruptedException e1) {
