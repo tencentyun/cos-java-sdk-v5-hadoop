@@ -412,7 +412,7 @@ public class COSClient implements COS {
     // 格式化bucket, 是bucket返回带appid
     private String formatBucket(String bucketName, String appid) throws CosClientException {
         if (appid == null) {
-            String parrtern = ".*-(125|100)[0-9]{3,}$";
+            String parrtern = ".*-[0-9]{3,}$";
             if (Pattern.matches(parrtern, bucketName)) {
                 return bucketName;
             } else {
